@@ -1,0 +1,148 @@
+plugins {
+	id 'org.springframework.boot' version '2.2.6.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+	id 'java'
+	id 'org.sonarqube' version '3.0'
+	id 'jacoco'
+}
+
+group = 'com.ccp.api.cs'
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+
+ext {
+	set('springCloudVersion', "Hoxton.RELEASE")
+}
+
+ext.profile = 'dev'
+
+dependencies {
+	// web
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+
+	// jdbc
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:2.1.0'
+	runtimeOnly 'mysql:mysql-connector-java:8.0.16'
+	//runtimeOnly files('libs/ojdbc6-11.1.0.7.0.jar')
+	
+	// JAXB (java11버전부터 해당기능이 JDK에서 제거됨으로 인해 디펜던시 추가
+	implementation 'javax.xml.bind:jaxb-api'
+
+	// config
+	implementation 'org.springframework.cloud:spring-cloud-starter-config'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	// session
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.session:spring-session-data-redis'
+
+	// aop
+	implementation 'org.springframework.boot:spring-boot-starter-aop'
+
+	// swagger
+	implementation ('io.springfox:springfox-swagger2:2.9.2') {
+		exclude group: 'io.swagger', module: 'swagger-annotations'
+		exclude group: 'io.swagger', module: 'swagger-models'
+	}
+	implementation 'io.swagger:swagger-annotations:1.5.21'
+	implementation 'io.swagger:swagger-models:1.5.21'
+	implementation 'io.springfox:springfox-swagger-ui:2.9.2'
+
+	// lombok
+	compileOnly 'org.projectlombok:lombok:1.18.8'
+	testCompileOnly 'org.projectlombok:lombok:1.18.8'
+	annotationProcessor 'org.projectlombok:lombok:1.18.8'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.8'
+
+	// test
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'	
+	testImplementation 'org.mockito:mockito-all:1.10.19'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// basic dependency
+	implementation 'com.google.code.gson:gson:2.8.5'
+
+	// jackson dataformat
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.8.5'
+	implementation 'org.codehaus.jackson:jackson-core-asl:1.9.13'
+
+	implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'
+	
+	//implementation files('libs/commons-lang3-3.9.jar')
+
+	//implementation files('libs/commons-beanutils-1.9.4.jar')
+
+	//implementation files('libs/commons-collections-3.2.2.jar')
+	
+	//poi : java 11부터 Deprecated되어 아래와 같이 file로 import해야함
+	//implementation 'org.apache.poi:poi-ooxml'
+	//implementation 'org.apache.poi:poi'
+	//implementation files('libs/poi-4.1.0.jar')
+	//implementation files('libs/poi-ooxml-4.1.0.jar')
+	
+	// dev tools
+	implementation("org.springframework.boot:spring-boot-devtools")
+	
+	// jwt
+	implementation 'io.jsonwebtoken:jjwt:0.9.1'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+	}
+}
+
+test {
+	systemProperty 'spring.profiles.active', 'dev'
+	systemProperty 'spring.cloud.config.uri', 'http://10.178.13.169:8888'
+	jacoco {
+		enabled = true
+		destinationFile = file('jacoco/jacoco.exec')
+	}
+}
+
+sonarqube {
+	properties {
+		property 'sonar.projectKey', 'ccp_api_cs'
+		property 'sonar.projectName', 'ccp_api_cs'
+		
+		property 'sonar.souces' , 'src'
+		property 'sonar.java.source', '11'
+		property 'sonar.language' , 'java'
+		property 'sonar.sourceEncoding', 'UTF-8'
+		property 'sonar.log.level' , 'INFO'
+		
+		property 'sonar.tests' , 'src/test'
+		property 'sonar.exclusions' , 'src/main/resource/**/*, gradle/*, libs/*, **/*Util*.java'
+		property 'sonar.coverage.exclusions' , 'src/main/resource/**/*, **/common/**/*.java, **/comm/**/*.java, **/ApiServerApplication.java'
+		
+		property 'sonar.java.binaries' , 'build/classes'
+		property 'sonar.dynamicAnalysis', 'reuseReports'
+
+		property 'sonar.java.coveragePlugin', 'jacoco'
+		property 'sonar.junit.ReportsPath', 'build/test-results'
+	}
+}
+
+jacocoTestReport {
+	reports {
+		xml.enabled true
+		html.enabled true
+		csv.enabled false
+		xml.destination file('build/reports/jacoco/test/jacocoTestReport.xml')
+		html.destination file('build/jacocoHtml')
+	}
+}
